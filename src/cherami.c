@@ -1,3 +1,13 @@
+/* cherami.c
+ *
+ * Interpret command line options, open the socket 
+ * and daemonize mailserver.
+ * 
+ * Author: Matthias Fassl <mf@x1598.at>
+ * Date: 2009-07-09
+ * License: MIT (see enclosed LICENSE file for details)
+ */
+
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>

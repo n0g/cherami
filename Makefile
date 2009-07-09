@@ -1,14 +1,19 @@
 CC = gcc
 CFLAGS = -I inc
-VERSION = "\"cherami 0.1\""
 
 sasl:
 	$(CC) -c src/sasl_auth.c
 
-net:
-	$(CC) -c src/net.c $(CFLAGS) -DVERSION=$(VERSION)
+delivery:
+	$(CC) -c src/delivery.c $(CFLAGS)
 
-all: net sasl
+protocolhandler:
+	$(CC) -c src/protocol_handler.c $(CFLAGS)
+
+cherami:
+	$(CC) -c src/cherami.c $(CFLAGS)
+
+all: sasl delivery cherami protocolhandler
 	$(CC) -o cherami *.o
 	
 clean:

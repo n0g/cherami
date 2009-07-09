@@ -1,3 +1,13 @@
+/* delivery.c
+ *
+ * Deliver a mail locally via an MDA or relay it to 
+ * the final destination.
+ * 
+ * Author: Matthias Fassl <mf@x1598.at>
+ * Date: 2009-07-09
+ * License: MIT (see enclosed LICENSE file for details)
+ */
+
 #include <string.h>
 #include <stdio.h>
 

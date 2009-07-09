@@ -1,3 +1,12 @@
+/* protocol_handler.c
+ *
+ * Implements the server-side of the SMTP protocol.
+ * 
+ * Author: Matthias Fassl <mf@x1598.at>
+ * Date: 2009-07-09
+ * License: MIT (see enclosed LICENSE file for details)
+ */
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
