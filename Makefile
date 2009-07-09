@@ -18,3 +18,4 @@ all: sasl delivery cherami protocolhandler
 	
 clean:
 	@rm -f *.o
+	@rm cherami
