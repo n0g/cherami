@@ -25,7 +25,7 @@ void handle_client(const int sock)
         char clienthost[HOST_NAME_MAX];
         char from[HOST_NAME_MAX];
         char rcpt[HOST_NAME_MAX];
-        char ip[15];;
+        char* ip;
         char command[5];
         char* data;
         int bytes;
@@ -40,19 +40,8 @@ void handle_client(const int sock)
         {
                 perror("couldn't retrieve hostname");
         }
-
-        //get ip address of peer
-        struct sockaddr_in addr;
-        socklen_t len = sizeof(addr);
-        getpeername(sock,(struct sockaddr*) &addr,&len);
-        int address = addr.sin_addr.s_addr;
-        int a,b,c,d;
-        //this only works correctly on LE systems (and ipv4 of course)
-        a = (address << 24) >> 24;
-        b = (address << 16) >> 24;
-        c = (address << 8) >> 24;
-        d = address >> 24;
-        snprintf(ip,15,"%d.%d.%d.%d",a,b,c,d);
+	
+	ip = getpeeraddress(sock);
 
         //send greeting
         snprintf(buffer,BUF_SIZ,"220 %s ESMTP %s Ready.\r\n",hostname,VERSION);
@@ -68,11 +57,12 @@ void handle_client(const int sock)
                 command[2] = toupper(command[2]);
                 command[3] = toupper(command[3]);
 
+		//TODO: put the actions in seperate functions
                 if(strcmp(command,"EHLO") == 0 || strcmp(command,"HELO") == 0)
                 {
                         memset(buffer,0,BUF_SIZ);
                         snprintf(buffer,BUF_SIZ,"250 %s Hello to you, Sir! %s. It's a great day to save lives. \r\n",hostname,ip);
-                        //send supported extensions     
+                        //TODO: send supported extensions     
 
                         send(sock,buffer,strlen(buffer),0);
                         memset(buffer,0,BUF_SIZ);
@@ -80,6 +70,10 @@ void handle_client(const int sock)
                 }
                 else if(strcmp(command,"AUTH") == 0)
                 {
+			//test for LOGIN or PLAIN type
+			//extract username and password (base64 decode them)
+			//call sasl auth function
+			//mark user as authenticated somewhere
                         continue;
                 }
                 else if(strcmp(command,"MAIL") == 0)
@@ -106,7 +100,9 @@ void handle_client(const int sock)
                         }
                         char* tmp = extract_address(buffer);
                         memcpy(rcpt,tmp,strlen(tmp));
-
+			
+			//TODO: check if the user needs to be authenticated to send to this recipient
+			//TODO: what about more than 1 recipient? array of recipients?
 
                         memset(buffer,0,BUF_SIZ);
                         snprintf(buffer,BUF_SIZ,"250 That's pretty far. I don't know if i can make it 'till there. I'll give my best!\r\n");
@@ -136,6 +132,8 @@ void handle_client(const int sock)
                         char* tmp = data;
                         int datacounter = 0;
                         int sizeofdata = BUF_SIZ+1;
+			//TODO: define maximum size of data
+			//TODO: what about the transparency feature?
                         do {
                                 memset(buffer,0,BUF_SIZ);
                                 bytes = recv(sock,buffer,BUF_SIZ,0);
@@ -152,6 +150,7 @@ void handle_client(const int sock)
 
                         } while(strstr(data,"\n.\n") == NULL && strstr(data,"\r\n.\r\n") == NULL);
 
+			//TODO: add lines to the email header
                         deliver_mail(ip,from,rcpt,data,datacounter);
                         //250 OK
                         memset(buffer,0,BUF_SIZ);
@@ -194,9 +193,28 @@ void handle_client(const int sock)
 
 char* extract_address(char* line)
 {
+	//TODO: check for errors - process hangs if line doesn't contain < or >
         char* address = strchr(line,'<')+1;
         *(strchr(line,'>')) = '\0';
 
         return address;
 }
 
+char* getpeeraddress(int socket)
+{
+	char *ip = malloc(15);
+        struct sockaddr_in addr;
+        socklen_t len = sizeof(addr);
+
+        getpeername(socket,(struct sockaddr*) &addr,&len);
+        int address = addr.sin_addr.s_addr;
+        int a,b,c,d;
+        //TODO: this only works correctly on LE systems (and ipv4 of course)
+        a = (address << 24) >> 24;
+        b = (address << 16) >> 24;
+        c = (address << 8) >> 24;
+        d = address >> 24;
+        snprintf(ip,15,"%d.%d.%d.%d",a,b,c,d);
+	
+	return ip;
+}
