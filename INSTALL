@@ -1,0 +1,5 @@
+Configure your Options (like domain and port number) in the file config.h
+
+Afterwards compile with "make all"
+
+After starting "./cherami" you can test the basic features of the mailserver
