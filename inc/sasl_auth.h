@@ -1,7 +1,6 @@
-int open_socket(const char* path);
-void send_string(int socket, const char* string);
-char* receive_string(int socket);
-int authenticate(	const char* socket_path,
+void sasl_send_str(int socket, const char* string);
+char* sasl_receive_str(int socket);
+int sasl_auth(	const char* socket_path,
 			const char* username,
 			const char* password,
 			const char* service,

@@ -15,29 +15,10 @@
 #include <sys/socket.h>
 #include <sys/un.h>
    
-int
-open_socket(const char* path) {	
-	int s, len;
-	struct sockaddr_un remote;
-
-	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-		perror("socket");
-		exit(1);
-	}
-
-	remote.sun_family = AF_UNIX;
-	strcpy(remote.sun_path, path);
-	len = strlen(remote.sun_path) + sizeof(remote.sun_family);
-	if (connect(s, (struct sockaddr *)&remote, len) == -1) {
-		perror("connect");
-		exit(1);
-	}
-	
-	return s;
-}
+#include <net.h>
 
 void
-send_string(int socket, const char* string) {
+sasl_send_str(int socket, const char* string) {
 	int hstrlen = strlen(string);
 	int len = hstrlen+2;
 	char buffer[len];
@@ -55,7 +36,7 @@ send_string(int socket, const char* string) {
 }
 
 char*
-receive_string(int socket) {
+sasl_receive_str(int socket) {
 	int t;
 	unsigned short len;
 	char *string;
@@ -80,19 +61,19 @@ receive_string(int socket) {
 }
 
 int
-authenticate(	const char* socket_path,
+sasl_auth(	const char* socket_path,
 		const char* username,
 		const char* password,
 		const char* service,
 		const char* realm) {
-	int socket = open_socket(socket_path);
+	int socket = unix_open_socket(socket_path);
 
-	send_string(socket,username);
-	send_string(socket,password);
-	send_string(socket,service);
-	send_string(socket,realm);
+	sasl_send_str(socket,username);
+	sasl_send_str(socket,password);
+	sasl_send_str(socket,service);
+	sasl_send_str(socket,realm);
 	
-	char* result = receive_string(socket);
+	char* result = sasl_receive_str(socket);
 	close(socket);
 
 	return strncmp(result,"OK",2);
