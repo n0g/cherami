@@ -1,3 +1,5 @@
+Install libglib2.0-dev
+
 Configure your Options (like domain and port number) in the file config.h
 
 Afterwards compile with "make all"

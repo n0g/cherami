@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -I inc
+CFLAGS = -I inc $(shell pkg-config --cflags glib-2.0)
+LIBS=$(shell pkg-config --libs glib-2.0)
 
 sasl:
 	$(CC) -c src/sasl_auth.c
@@ -13,8 +14,8 @@ protocolhandler:
 cherami:
 	$(CC) -c src/cherami.c $(CFLAGS)
 
-all: sasl delivery cherami protocolhandler
-	$(CC) -o cherami *.o
+all: cherami sasl delivery protocolhandler
+	$(CC) -o cherami *.o $(LIBS)
 	
 clean:
 	@rm -f *.o
