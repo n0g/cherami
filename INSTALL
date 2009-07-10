@@ -1,7 +1,10 @@
 Install libglib2.0-dev
+Install and configure saslauthd (you probably want to use "shadow" as authentication type)
+make sure that /var/run/saslauthd belongs to group sasl
+add user cherami and add it to group sasl
 
 Configure your Options (like domain and port number) in the file config.h
 
 Afterwards compile with "make all"
 
-After starting "./cherami" you can test the basic features of the mailserver
+After starting "su cherami -c ./cherami" you can test the basic features of the mailserver
