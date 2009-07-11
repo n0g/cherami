@@ -7,7 +7,9 @@
 #include <arpa/inet.h>
 #include <math.h>
 
+#include <config.h>
 #include <net.h>
+#include <utils.h>
 #include <protocol_handler.h>
 
 int
@@ -86,36 +88,67 @@ tcp_accept_connections(int socket, struct sockaddr_in* addr, socklen_t* addr_len
 
 void
 tcp_send_str(int socket, char* fmt, ...) {
-	va_list ap, copy;
+	va_list ap, ap_cpy;
 	int d;
-	char c, *s, *buffer, *tmp;
+	char c, *s, *buffer, *fmt_cpy;
 
-	int len = strlen(fmt);
+	int len = strlen(fmt)+1;
 
 	va_start(ap, fmt);
-	tmp = fmt;
-	va_copy(copy, ap);
+
+	fmt_cpy = fmt;
+	va_copy(ap_cpy, ap);
+
+	//check how much space we need to allocate
 	while (*fmt)
 		switch (*fmt++) {
 			case 's':
 				s = va_arg(ap, char *);
-				len += strlen(s);
+				if(*(fmt-2) == '%') len += strlen(s);
 				break;
 			case 'd':
 				d = va_arg(ap, int);
-				len += (int) (floor(log10((double) d))+1.0);
-				break;
-			case 'c':
-				c = (char) va_arg(ap, int);
-				len ++;
+				if(*(fmt-2) == '%') len += (int) (floor(log10((double) d))+1.0);
 				break;
 		}
-	fmt = tmp;
 
+	//allocate the correct amount of space (actually a bit more)
 	buffer = malloc(len);
-	vsnprintf(buffer, len, fmt, copy);
+	memset(buffer,0,len);
+
+	//print everything to the buffer
+	vsnprintf(buffer, len, fmt_cpy, ap_cpy);
+	//send buffer
 	send(socket, buffer, strlen(buffer), 0);
+
 	free(buffer);
-	va_end(copy);
+	va_end(ap_cpy);
 	va_end(ap);
+}
+
+char* tcp_receive_line(int socket) {
+	int bytes_recv, data_size = BUF_SIZ+1, data_cnt = 0;
+	char buffer[BUF_SIZ], *data = malloc(data_size), *tmp;
+
+	tmp = data;
+	//receive data until a newline occurs
+	do {
+		memset(buffer, 0, BUF_SIZ);
+		bytes_recv = recv(socket, buffer, BUF_SIZ, 0);
+		data_cnt += bytes_recv;
+		//if number of received bytes is 0 or less, an error occured 
+		//and we want to stop reading form the socket
+		if(bytes_recv < 1)
+			break;
+		//if the number of bytes we received is bigger than our allocated 
+		//space we need to enlarge the reserved memory for it
+		if(data_size < data_cnt) {
+			data = realloc(data, data_size*2);
+			data_size *= 2;
+		}
+		memcpy(tmp, buffer, bytes_recv);
+		tmp += bytes_recv;
+	} while(strstr(data, "\n") == NULL);
+
+	return stripCRLF(data);	
 }

@@ -19,7 +19,7 @@ int deliver_mail(char* ip,char* from,char* rcpt,char* data,int datalen)
         char* domain = strchr(rcpt,'@')+1;
         printf("IP-Address: %s\nFrom: %s\nRecipient: %s\nDomain: %s\nData:\n%s\n",ip,from,rcpt,domain,data);
 
-        if(strcmp(domain,DOMAIN) == 0)
+        if(strcmp(domain,LOCAL_DOMAIN) == 0)
         {
                 //local delivery
                 return deliver_local(ip,from,rcpt,data,datalen);
