@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <math.h>
 
 #include <net.h>
 #include <protocol_handler.h>
@@ -81,3 +84,38 @@ tcp_accept_connections(int socket, struct sockaddr_in* addr, socklen_t* addr_len
 	return 0;
 }
 
+void
+tcp_send_str(int socket, char* fmt, ...) {
+	va_list ap, copy;
+	int d;
+	char c, *s, *buffer, *tmp;
+
+	int len = strlen(fmt);
+
+	va_start(ap, fmt);
+	tmp = fmt;
+	va_copy(copy, ap);
+	while (*fmt)
+		switch (*fmt++) {
+			case 's':
+				s = va_arg(ap, char *);
+				len += strlen(s);
+				break;
+			case 'd':
+				d = va_arg(ap, int);
+				len += (int) (floor(log10((double) d))+1.0);
+				break;
+			case 'c':
+				c = (char) va_arg(ap, int);
+				len ++;
+				break;
+		}
+	fmt = tmp;
+
+	buffer = malloc(len);
+	vsnprintf(buffer, len, fmt, copy);
+	send(socket, buffer, strlen(buffer), 0);
+	free(buffer);
+	va_end(copy);
+	va_end(ap);
+}
