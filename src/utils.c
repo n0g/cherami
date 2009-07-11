@@ -1,3 +1,10 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <glib/gbase64.h>
+
 #include <utils.h>
 
 void daemonize()

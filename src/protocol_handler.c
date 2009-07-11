@@ -12,7 +12,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <glib/gbase64.h>
 
 #include <delivery.h>
 #include <protocol_handler.h>
@@ -189,7 +188,7 @@ int smtp_auth_login(int sock)
 	//strip the <CRLF>/<LF> from the end
 	password = base64_decode(stripCRLF(buffer));
 	//call sasl auth function
-	if(!authenticate(SOCK_PATH,username,password,"smtp",""))
+	if(!sasl_auth(SOCK_PATH,username,password,"smtp",""))
 		return 1;
 	else 
 		return 0;
