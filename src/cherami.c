@@ -17,8 +17,8 @@
 #include <net.h>
 #include <utils.h>
 
-int main(int argc, char* argv)
-{
+int
+main(int argc, char* argv) {
    //TODO: read commandline options somewhere
    //TODO: add syslog logging here
    //openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
@@ -27,8 +27,7 @@ int main(int argc, char* argv)
    struct sockaddr_in addr;
 
    int socket = 0;
-   if((socket = tcp_open_socket(PORT,"0.0.0.0",&addr,&addr_len)) < 0)
-   {
+   if((socket = tcp_open_socket(PORT,"0.0.0.0",&addr,&addr_len)) < 0) {
 	perror("couldn't open socket");
 	exit(1);
    }    

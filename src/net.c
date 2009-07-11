@@ -126,7 +126,8 @@ tcp_send_str(int socket, char* fmt, ...) {
 	va_end(ap);
 }
 
-char* tcp_receive_line(int socket) {
+char*
+tcp_receive_line(int socket) {
 	int bytes_recv, data_size = BUF_SIZ+1, data_cnt = 0;
 	char buffer[BUF_SIZ], *data = malloc(data_size), *tmp;
 
@@ -138,8 +139,9 @@ char* tcp_receive_line(int socket) {
 		data_cnt += bytes_recv;
 		//if number of received bytes is 0 or less, an error occured 
 		//and we want to stop reading form the socket
-		if(bytes_recv < 1)
-			break;
+		if(bytes_recv < 1) {
+			return NULL;
+		}
 		//if the number of bytes we received is bigger than our allocated 
 		//space we need to enlarge the reserved memory for it
 		if(data_size < data_cnt) {

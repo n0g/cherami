@@ -7,8 +7,8 @@
 
 #include <utils.h>
 
-void daemonize()
-{
+void
+daemonize() {
         int pid;
         pid = fork();
         if (pid > 0)
@@ -18,8 +18,8 @@ void daemonize()
         }
 }
 
-char* stripCRLF(char* line)
-{
+char*
+stripCRLF(char* line) {
         char *tmp = line;
 
         if((tmp = strstr(line,"\r\n")) != NULL)
@@ -30,8 +30,8 @@ char* stripCRLF(char* line)
         return line;
 }
 
-char* getpeeraddress(int socket)
-{
+char*
+getpeeraddress(int socket) {
         char *ip = malloc(15);
         struct sockaddr_in addr;
         socklen_t len = sizeof(addr);
@@ -49,8 +49,8 @@ char* getpeeraddress(int socket)
         return ip;
 }
 
-char* base64_decode(char* string)
-{
+char*
+base64_decode(char* string) {
         //TODO: replace this with own implementation
         int b64_len = strlen(string);
         return g_base64_decode((gchar*)string,(gsize*)&b64_len);
