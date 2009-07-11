@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -I inc $(shell pkg-config --cflags glib-2.0)
-LIBS= -lm $(shell pkg-config --libs glib-2.0)
+LIBS=$(shell pkg-config --libs glib-2.0)
 
 sasl:
 	$(CC) -c src/sasl_auth.c $(CFLAGS)

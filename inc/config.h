@@ -1,6 +1,6 @@
 #define BUF_SIZ 4096
 #define PORT 7070 
-#define LOCAL_DOMAIN "x1598.at"
+#define DOMAIN "x1598.at"
 #define MDA "/usr/local/bin/procmail"
 #define SOCK_PATH "/var/run/saslauthd/mux"
 #define VERSION "cherami 0.1"

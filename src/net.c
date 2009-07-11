@@ -90,7 +90,7 @@ tcp_send_str(int socket, char* fmt, ...) {
 	int d;
 	char c, *s, *buffer, *tmp;
 
-	int len = strlen(fmt)+1;
+	int len = strlen(fmt);
 
 	va_start(ap, fmt);
 	tmp = fmt;
@@ -113,7 +113,6 @@ tcp_send_str(int socket, char* fmt, ...) {
 	fmt = tmp;
 
 	buffer = malloc(len);
-	memset(buffer,0,len);
 	vsnprintf(buffer, len, fmt, copy);
 	send(socket, buffer, strlen(buffer), 0);
 	free(buffer);
