@@ -23,7 +23,7 @@ unix_open_socket(const char* path) {
         }
 
         remote.sun_family = AF_UNIX;
-        strcpy(remote.sun_path, path);
+        strncpy(remote.sun_path, path, sizeof(remote.sun_path));
         len = strlen(remote.sun_path) + sizeof(remote.sun_family);
         if (connect(s, (struct sockaddr *)&remote, len) == -1) {
                 perror("connect");

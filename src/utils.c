@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <utils.h>
 
@@ -78,11 +79,13 @@ str_replace(const char* string, char dst, char src) {
  */
 char*
 str_toupper(const char* string) {
-	char *new_str = malloc(strlen(string)+1);
-	strncpy(new_str,string,strlen(string));
+	int str_len = strlen(string)+1;
+	char *new_str = malloc(str_len);
+	char *tmp = new_str;
+	strncpy(new_str,string,str_len);
 	
-	while(*new_str++ != '\0')
-		*new_str = toupper(*new_str);
+	while(*tmp != '\0')
+		*tmp++ = toupper(*tmp);
 
 	return new_str;
 }

@@ -7,11 +7,12 @@
  * License: MIT (see enclosed LICENSE file for details)
  */
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <delivery.h>
 #include <protocol_handler.h>
@@ -168,7 +169,7 @@ smtp_auth(const int socket,const char* line) {
 void
 smtp_ehlo(const int socket,const char* hostname,const char* ip) {
 	//TODO: dynamically send available extensions
-	tcp_send_str(socket, "%s\r\n", hostname, ip);
+	tcp_send_str(socket, SMTP_EHLO, hostname, ip);
 }
 
 char*
