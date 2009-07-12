@@ -8,7 +8,7 @@
 #define MDA "/usr/local/bin/procmail"
 #define SOCK_PATH "/var/run/saslauthd/mux"
 #define PID_FILE "/tmp/cherami.pid"
-#define BUF_SIZ 10 
+#define BUF_SIZ 4092 
 
 //Word of advice: DON'T fuck with those.
 #define SMTP_GREETING "220 %s ESMTP %s Ready.\r\n"
