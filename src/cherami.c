@@ -23,18 +23,16 @@ main(int argc, char* argv) {
    //TODO: add syslog logging here
    //openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
    //syslog(LOG_INFO,"----- %s is starting -----",argv[0]);
-   socklen_t addr_len;
-   struct sockaddr_in addr;
 
-   int socket = 0;
-   if((socket = tcp_open_socket(PORT,"0.0.0.0",&addr,&addr_len)) < 0) {
-	perror("couldn't open socket");
-	exit(1);
-   }    
+	int socket = 0;
+	if((socket = listen_server(NULL,"socks",AF_UNSPEC,SOCK_STREAM)) < 0) {
+		perror("couldn't open socket()");
+		exit(1);
+	}
 
     //daemonize();
     //TODO: write PID file
-    tcp_accept_connections(socket,&addr,&addr_len);
+    tcp_accept_connections(socket);
     //TODO: install signal handler to close socket
     //signal( SIGTERM, sig_handler);
     //close(s);
