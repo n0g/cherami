@@ -133,6 +133,7 @@ tcp_receive_line(int socket) {
 
 	tmp = data;
 	//receive data until a newline occurs
+	//TODO: yeeeeeaaah, this really does *not* work -> repair
 	do {
 		memset(buffer, 0, BUF_SIZ);
 		bytes_recv = recv(socket, buffer, BUF_SIZ, 0);
@@ -144,10 +145,9 @@ tcp_receive_line(int socket) {
 		}
 		//if the number of bytes we received is bigger than our allocated 
 		//space we need to enlarge the reserved memory for it
-		if(data_size < data_cnt) {
-			data = realloc(data, data_size*2);
-			data_size *= 2;
-		}
+		if(data_size < data_cnt)
+			data = realloc(data, data_size *= 2);
+
 		memcpy(tmp, buffer, bytes_recv);
 		tmp += bytes_recv;
 	} while(strstr(data, "\n") == NULL);
