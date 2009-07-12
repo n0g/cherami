@@ -66,7 +66,9 @@ sasl_auth(	const char* socket_path,
 		const char* password,
 		const char* service,
 		const char* realm) {
-	int socket = unix_open_socket(socket_path);
+	int socket;
+	if((socket = unix_open_socket(socket_path)) < 0)
+		return 1;
 
 	sasl_send_str(socket,username);
 	sasl_send_str(socket,password);

@@ -19,7 +19,7 @@ unix_open_socket(const char* path) {
 
         if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
                 perror("socket");
-                exit(1);
+		return -1;
         }
 
         remote.sun_family = AF_UNIX;
@@ -27,7 +27,7 @@ unix_open_socket(const char* path) {
         len = strlen(remote.sun_path) + sizeof(remote.sun_family);
         if (connect(s, (struct sockaddr *)&remote, len) == -1) {
                 perror("connect");
-                exit(1);
+		return -2;
         }
 
         return s;
