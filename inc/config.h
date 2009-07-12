@@ -3,6 +3,7 @@
 
 #define VERSION "cherami 0.1"
 #define MAX_MAIL_SIZE 52228800
+#define SPOOL_FILE_DIR "/var/spool/cherami"
 #define MDA "/usr/local/bin/procmail"
 #define SOCK_PATH "/var/run/saslauthd/mux"
 #define PID_FILE "/tmp/cherami.pid"
