@@ -1,17 +1,8 @@
-/* utils.c
- *
- * Small helper functions.
- *
- * Author: Matthias Fassl
- * Date: 2009-07-12
- * License: MIT (see enclosed LICENSE file for details)
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <glib/gbase64.h>
 
 #include <utils.h>
 
@@ -59,8 +50,35 @@ getpeeraddress(int socket) {
 
 char*
 base64_decode(char* string) {
-        //TODO: replace this with own implementation
-        int b64_len = strlen(string);
-        return g_base64_decode((gchar*)string,(gsize*)&b64_len);
-}
+	char *new_string = malloc(strlen(string)+1);
+	strncpy(new_string,string,strlen(string));
 
+	char base64_table[66] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; 
+
+	char *decoded_str = malloc(1+(3*strlen(string))/4);
+	char *tmp = decoded_str;
+	
+	//replace all = by A so that base64 fill bytes end up being 
+	//null terminating bytes in the decoded string
+	char *blah;
+	while((blah = strchr(new_string,'=')) != NULL) {
+		*blah = 'A'; 
+	}
+
+	//convert 4 base64 encoded bytes into 3 decoded bytes 
+	//until the base64 encoded string ends
+	while(*new_string != '\0') {
+		int v1 = strchr(base64_table,(int)*new_string++)-base64_table;
+		int v2 = strchr(base64_table,(int)*new_string++)-base64_table;
+		int v3 = strchr(base64_table,(int)*new_string++)-base64_table;
+		int v4 = strchr(base64_table,(int)*new_string++)-base64_table;
+
+		*tmp++ = (v1 << 2) + (v2 >> 4);
+		*tmp++ = (v2 << 4) + (v3 >> 2);
+		*tmp++ = (v3 << 6) + v4;
+	
+	}
+
+	free(new_string);
+	return decoded_str;
+}

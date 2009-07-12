@@ -1,11 +1,3 @@
-/* net.c
- *
- * Socket related functions.
- *
- * Author: Matthias Fassl
- * Date: 2009-07-12
- * License: MIT (see enclosed LICENSE file for details)
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
