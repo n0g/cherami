@@ -32,11 +32,8 @@ main(int argc, char* argv[]) {
 	}
 
 	daemonize();
-	//TODO: write PID file
+	write_pid_file(PID_FILE);
+	signal( SIGTERM, signal_handler);
 	tcp_accept_connections(socket);
-	//TODO: install signal handler to close socket
-	//signal( SIGTERM, sig_handler);
-	//close(s);
-	//TODO: closelog for syslog
 	return 0;
 }

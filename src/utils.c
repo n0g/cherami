@@ -127,3 +127,20 @@ base64_decode(const char* string) {
 	free(free_new_str);
 	return decoded_str;
 }
+
+void
+write_pid_file(const char* filename) {
+	FILE *file = fopen(filename,"w");
+	int pid = getpid();
+	fprintf(file,"%u",pid);
+	fclose(file);
+}
+
+void signal_handler(int signal) {
+	syslog(LOG_INFO, "stopping");
+	closelog();
+	//TODO: delete pid file
+	//TODO: close socket
+	//close(socket);
+	exit(0);
+}

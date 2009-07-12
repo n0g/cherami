@@ -4,3 +4,5 @@ char* getpeeraddress(int socket);
 char* base64_decode(const char* string);
 char* str_replace(const char* string, char dst, char src);
 char* str_toupper(const char* string);
+void write_pid_file(const char* filename);
+void signal_handler(int signal);
