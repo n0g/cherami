@@ -1,6 +1,7 @@
-#define PORT 1337 
+#define PORT "1337" 
 #define LOCAL_DOMAIN "x1598.at"
 #define FQDN "zemanek.x1598.at"
+#define LISTEN_ADDRESS "::"
 
 #define VERSION "cherami 0.1"
 #define MAX_MAIL_SIZE 52428800

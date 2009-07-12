@@ -37,7 +37,7 @@ unix_open_socket(const char* path) {
 }
 
 int
-listen_server(const char *hostname,
+tcp_open_server_socket(const char *hostname,
               const char *service,
               int         family,
               int         socktype)

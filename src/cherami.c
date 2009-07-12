@@ -25,7 +25,7 @@ main(int argc, char* argv) {
 	//syslog(LOG_INFO,"----- %s is starting -----",argv[0]);
 
 	int socket = 0;
-	if((socket = listen_server(NULL,"socks",AF_UNSPEC,SOCK_STREAM)) < 0) {
+	if((socket = tcp_open_server_socket(LISTEN_ADDRESS,PORT,AF_UNSPEC,SOCK_STREAM)) < 0) {
 		perror("couldn't open socket()");
 		exit(1);
 	}
