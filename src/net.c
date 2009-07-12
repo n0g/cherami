@@ -5,7 +5,10 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netdb.h>
 #include <math.h>
+#include <syslog.h>
 
 #include <config.h>
 #include <net.h>
@@ -99,9 +102,12 @@ tcp_open_server_socket(const char *hostname,
 
 int
 tcp_accept_connections(int socket) {
+	struct sockaddr_storage addr;
+	socklen_t addr_len = sizeof(addr);
+
 	int pid, c;
 	for(;;) {
-		if((c = accept(socket, (struct sockaddr*) addr, addr_len)) == -1) {
+		if((c = accept(socket, (struct sockaddr*) &addr, &addr_len)) == -1) {
 			syslog(LOG_ERR, "tcp_accept_connections: accept() failed, probably because socket was closed - terminating");
 			break;
 		}
