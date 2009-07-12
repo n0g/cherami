@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <syslog.h>
    
 #include <net.h>
 
@@ -30,8 +31,7 @@ sasl_send_str(int socket, const char* string) {
 	memcpy(tmp,string,hstrlen);
 		
 	if (send(socket, buffer,len, 0) == -1) {
-		perror("send");
-		exit(1);
+		syslog(LOG_ERR,"sasl_send_str: send failed");
 	}
 }
 
@@ -42,9 +42,10 @@ sasl_receive_str(int socket) {
 	char *string;
 	
 	if((t = recv(socket, &len, 2, 0)) < 1) {
-		if (t < 0) perror("recv");
-		else printf("Server closed connection\n");
-		exit(1);
+		if (t < 0) 
+			syslog(LOG_ERR,"sasl_receive_str: recv failed");
+		else 
+			syslog(LOG_INFO,"sasl_receive_str: Server closed connection");
 	}
 	
 	len = ntohs(len);
@@ -52,9 +53,10 @@ sasl_receive_str(int socket) {
 	memset(string,0,len+1);
 	
 	if((t = recv(socket, string, len, 0)) < 1) {
-		if (t < 0) perror("recv");
-		else printf("Server closed connection\n");
-		exit(1);
+		if (t < 0) 
+			syslog(LOG_ERR,"sasl_receive_str: recv failed");
+		else 
+			syslog(LOG_INFO,"sasl_receive_str: Server closed connection");
 	}
 	
 	return string;

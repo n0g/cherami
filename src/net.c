@@ -5,12 +5,17 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netdb.h>
 #include <math.h>
+#include <syslog.h>
 
 #include <config.h>
 #include <net.h>
 #include <utils.h>
 #include <protocol_handler.h>
+
+#define LISTEN_QUEUE 128
 
 int
 unix_open_socket(const char* path) {
@@ -18,7 +23,7 @@ unix_open_socket(const char* path) {
         struct sockaddr_un remote;
 
         if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-                perror("socket");
+		syslog(LOG_ERR,"unix_open_socket: couldn't create unix socket");
 		return -1;
         }
 
@@ -26,7 +31,7 @@ unix_open_socket(const char* path) {
         strncpy(remote.sun_path, path, sizeof(remote.sun_path));
         len = strlen(remote.sun_path) + sizeof(remote.sun_family);
         if (connect(s, (struct sockaddr *)&remote, len) == -1) {
-                perror("connect");
+		syslog(LOG_ERR, "unix_open_socket: couldn't connect to %s",path);
 		return -2;
         }
 
@@ -58,7 +63,7 @@ tcp_open_server_socket(const char *hostname,
     n = getaddrinfo(hostname, service, &hints, &res);
 
     if (n <0) {
-        fprintf(stderr, "getaddrinfo error:: [%s]\n", gai_strerror(n));
+	syslog(LOG_ERR,"tcp_open_server_socket: getaddrinfo error:: [%s]", gai_strerror(n));
         return -1;
     }
 
@@ -86,8 +91,7 @@ tcp_open_server_socket(const char *hostname,
 
     if (sockfd < 0) {
         freeaddrinfo(ressave);
-        fprintf(stderr,
-                "socket error:: could not open socket\n");
+	syslog(LOG_ERR, "tcp_open_server_socket: Could not open socket");
         return -1;
     }
 
@@ -100,10 +104,13 @@ tcp_open_server_socket(const char *hostname,
 
 int
 tcp_accept_connections(int socket) {
+	struct sockaddr_storage addr;
+	socklen_t addr_len = sizeof(addr);
+
 	int pid, c;
 	for(;;) {
-		if((c = accept(socket, (struct sockaddr*) addr, addr_len)) == -1) {
-			perror("accept() failed, probably because socket was closed - terminating");
+		if((c = accept(socket, (struct sockaddr*) &addr, &addr_len)) == -1) {
+			syslog(LOG_ERR, "tcp_accept_connections: accept() failed, probably because socket was closed - terminating");
 			break;
 		}
 
@@ -112,7 +119,7 @@ tcp_accept_connections(int socket) {
 			handle_client(c);
 		}
 		else if(pid < 0) {
-			perror("fork() failed");
+			syslog(LOG_ERR, "tcp_accept_connections: fork() failed. You're probably fucked.");
 		}
 	}
 

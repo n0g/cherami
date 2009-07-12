@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <syslog.h>
 
 #include <delivery.h>
 #include <protocol_handler.h>
@@ -33,6 +34,7 @@ handle_client(const int socket) {
         memset(command,0,5);
 	
 	ip = getpeeraddress(socket);
+	syslog(LOG_INFO, "Accepted SMTP Connection from %s",ip); 
 
         //send greeting
 	tcp_send_str(socket,SMTP_GREETING,hostname,VERSION);
@@ -49,7 +51,6 @@ handle_client(const int socket) {
                 }
                 else if(strcmp(up_command,"AUTH") == 0) {
 			authenticated = smtp_auth(socket,line);
-
                 }
                 else if(strcmp(up_command,"MAIL") == 0) {
 			from = smtp_mail(socket,line);
@@ -62,7 +63,9 @@ handle_client(const int socket) {
 			int data_cnt = smtp_data(socket, rcpt, data);
 			if(data < 0)
 				continue;
+
 			//TODO: add lines to the email header
+			syslog(LOG_INFO, "Accepted Email from %s to %s delivered by %s",from,rcpt,ip);
                        	deliver_mail(ip,from,rcpt,data,data_cnt);
 			tcp_send_str(socket, SMTP_OK);
 
@@ -73,6 +76,7 @@ handle_client(const int socket) {
 			rcpt = NULL;
                 }
                 else if(strcmp(up_command,"VRFY") == 0 || strcmp(command,"EXPN") == 0) {
+			syslog(LOG_INFO, "%s sent a VRFY command, he could be a spambot",ip);
 			tcp_send_str(socket, SMTP_VRFY_EXPN);
                 }
                 else if(strcmp(up_command,"QUIT") == 0) {
@@ -80,6 +84,7 @@ handle_client(const int socket) {
                         break;
                 }
                 else {
+			syslog(LOG_INFO,"%s sent unrecognized SMTP command %s",ip,line);
 			tcp_send_str(socket, SMTP_UNRECOGNIZED);
                 }
 
@@ -121,6 +126,7 @@ smtp_auth_login(const int socket) {
 	//extract username (base64 decode it)
 	recv_line = (char*) tcp_receive_line(socket);
 	username = base64_decode(recv_line);
+	syslog(LOG_INFO, "%s tries to authenticate", username);
 	free(recv_line);
 	//send password request (base64 encoded)
 	tcp_send_str(socket, SMTP_AUTH_LOGIN_PASS);
