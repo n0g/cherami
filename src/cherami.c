@@ -19,10 +19,10 @@
 
 int
 main(int argc, char* argv) {
-   //TODO: read commandline options somewhere
-   //TODO: add syslog logging here
-   //openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
-   //syslog(LOG_INFO,"----- %s is starting -----",argv[0]);
+	//TODO: read commandline options somewhere
+	//TODO: add syslog logging here
+	//openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
+	//syslog(LOG_INFO,"----- %s is starting -----",argv[0]);
 
 	int socket = 0;
 	if((socket = listen_server(NULL,"socks",AF_UNSPEC,SOCK_STREAM)) < 0) {
@@ -30,11 +30,11 @@ main(int argc, char* argv) {
 		exit(1);
 	}
 
-    //daemonize();
-    //TODO: write PID file
-    tcp_accept_connections(socket);
-    //TODO: install signal handler to close socket
-    //signal( SIGTERM, sig_handler);
-    //close(s);
-    return 0;
+	daemonize();
+	//TODO: write PID file
+	tcp_accept_connections(socket);
+	//TODO: install signal handler to close socket
+	//signal( SIGTERM, sig_handler);
+	//close(s);
+	return 0;
 }

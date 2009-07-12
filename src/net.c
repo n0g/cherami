@@ -103,38 +103,6 @@ listen_server(const char *hostname,
 }
 
 int
-tcp_open_socket(int port, char* address, struct sockaddr_in* addr, socklen_t* addr_len) {
-	int s;
-
-	//TODO: use address string to specify where to open the socket
-	(*addr).sin_addr.s_addr = INADDR_ANY;
-	(*addr).sin_port = htons(port);
-	(*addr).sin_family = AF_INET;
-	*addr_len = sizeof(*addr);
-
-	//create socket
-	if((s = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
-		perror("socket() failed");
-		return -1;
-	}
-
-
-	//bind socket
-	if (bind(s, (struct sockaddr*)addr, *addr_len) == -1) {
-		perror("bind() failed");
-		return -2;
-	}
-
-	//listen socket
-	if (listen(s, 3) == -1) {
-		perror("listen() failed");
-		return -3;
-	}
-
-	return s;
-}
-
-int
 tcp_accept_connections(int socket) {
 	int pid, c;
 	struct sockaddr_storage addr;
