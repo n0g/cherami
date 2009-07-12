@@ -12,6 +12,8 @@
 #include <utils.h>
 #include <protocol_handler.h>
 
+#define LISTEN_QUEUE 128
+
 int
 unix_open_socket(const char* path) {
         int s, len;
