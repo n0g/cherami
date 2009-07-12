@@ -1,4 +1,4 @@
-#define PORT 7070 
+#define PORT 1337 
 #define LOCAL_DOMAIN "x1598.at"
 
 #define VERSION "cherami 0.1"
