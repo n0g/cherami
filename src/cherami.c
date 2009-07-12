@@ -19,28 +19,6 @@
 
 int
 main(int argc, char* argv) {
-<<<<<<< HEAD:src/cherami.c
-   //TODO: read commandline options somewhere
-   //TODO: add syslog logging here
-   //openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
-   //syslog(LOG_INFO,"----- %s is starting -----",argv[0]);
-   socklen_t addr_len;
-   struct sockaddr_in addr;
-
-   int socket = 0;
-   if((socket = tcp_open_socket(PORT,"0.0.0.0",&addr,&addr_len)) < 0) {
-	perror("couldn't open socket");
-	exit(1);
-   }    
-
-    //daemonize();
-    //TODO: write PID file
-    tcp_accept_connections(socket,&addr,&addr_len);
-    //TODO: install signal handler to close socket
-    //signal( SIGTERM, sig_handler);
-    //close(s);
-    return 0;
-=======
 	//TODO: read commandline options somewhere
 	//TODO: add syslog logging here
 	//openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
@@ -59,5 +37,4 @@ main(int argc, char* argv) {
 	//signal( SIGTERM, sig_handler);
 	//close(s);
 	return 0;
->>>>>>> ipv6:src/cherami.c
 }
