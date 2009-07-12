@@ -39,7 +39,7 @@ handle_client(const int socket) {
 	ip = getpeeraddress(socket);
 
         //send greeting
-	tcp_send_str(socket,"220 %s ESMTP %s Ready.\r\n",hostname,VERSION);
+	tcp_send_str(socket,SMTP_GREETING,hostname,VERSION);
 
         while((line = (char*) tcp_receive_line(socket)) != NULL) {
                 //extract command
@@ -68,7 +68,7 @@ handle_client(const int socket) {
 				continue;
 			//TODO: add lines to the email header
                        	deliver_mail(ip,from,rcpt,data,data_cnt);
-			tcp_send_str(socket, "250 OK\r\n");
+			tcp_send_str(socket, SMTP_OK);
 
 			//clear from and rcpt fields, client could send another mail
 			free(from);
@@ -77,14 +77,14 @@ handle_client(const int socket) {
 			rcpt = NULL;
                 }
                 else if(strcmp(up_command,"VRFY") == 0 || strcmp(command,"EXPN") == 0) {
-			tcp_send_str(socket,"252 Carrier Pigeons are sworn to secrecy! *flutter*\r\n");
+			tcp_send_str(socket, SMTP_VRFY_EXPN);
                 }
                 else if(strcmp(up_command,"QUIT") == 0) {
-			tcp_send_str(socket, "221 %s closing connection\r\n", hostname);
+			tcp_send_str(socket, SMTP_QUIT, hostname);
                         break;
                 }
                 else {
-			tcp_send_str(socket, "500 unrecognized command\r\n");
+			tcp_send_str(socket, SMTP_UNRECOGNIZED);
                 }
 
 		free(line);
@@ -121,13 +121,13 @@ smtp_auth_login(const int socket) {
 	char *username,*password;
 
 	//send username request (base64 encode)
-	tcp_send_str(socket,"334 VXNlcm5hbWU6\r\n");
+	tcp_send_str(socket, SMTP_AUTH_LOGIN_USER);
 	//extract username (base64 decode it)
 	recv_line = (char*) tcp_receive_line(socket);
 	username = base64_decode(recv_line);
 	free(recv_line);
 	//send password request (base64 encoded)
-	tcp_send_str(socket,"334 UGFzc3dvcmQ6\r\n");
+	tcp_send_str(socket, SMTP_AUTH_LOGIN_PASS);
 	//extract password (base64 decode it)
 	recv_line = (char*) tcp_receive_line(socket);
 	password = base64_decode(recv_line);
@@ -151,15 +151,15 @@ smtp_auth(const int socket,const char* line) {
 		authenticated = smtp_auth_login(socket);
 	}
 	else {
-		tcp_send_str(socket, "504 Unrecognized authentication type\r\n");
+		tcp_send_str(socket, SMTP_UNRECOGNIZED_AUTH);
 		free(up_type);
 		return authenticated;
 	}
 
 	if(authenticated)
-		tcp_send_str(socket, "235 OK\r\n");
+		tcp_send_str(socket, SMTP_AUTH_OK);
 	else
-		tcp_send_str(socket, "501 Authentication failed\r\n");
+		tcp_send_str(socket, SMTP_AUTH_FAIL);
 
 	free(up_type);
 	return authenticated;
@@ -168,7 +168,7 @@ smtp_auth(const int socket,const char* line) {
 void
 smtp_ehlo(const int socket,const char* hostname,const char* ip) {
 	//TODO: dynamically send available extensions
-	tcp_send_str(socket, "250-%s Hello %s\r\n250 AUTH LOGIN\r\n", hostname, ip);
+	tcp_send_str(socket, "%s\r\n", hostname, ip);
 }
 
 char*
@@ -177,13 +177,13 @@ smtp_mail(const int socket,char* line) {
 	//check if mail address is well formed
 	//TODO: check for at sign etc - external function check_mail_address() ?
 	if((tmp = extract_address(line)) == NULL) {
-		tcp_send_str(socket, "503 Mailadress Format not as expected\r\n");
+		tcp_send_str(socket, SMTP_UNEXPECTED_MAIL_FORMAT);
 		return NULL;
 	}
 	from = malloc(strlen(tmp)+1);
 	strncpy(from,tmp,strlen(tmp));
 
-	tcp_send_str(socket, "250 OK\r\n");
+	tcp_send_str(socket, SMTP_OK);
 
 	return from;
 }
@@ -194,24 +194,24 @@ smtp_rcpt(const int socket,const char* from,int authenticated, char* line) {
 	//check if recipient is well formed
 	//TODO: check for at sign etc - external function check_mail_address() ?
 	if((tmp = extract_address(line)) == NULL) {
-		tcp_send_str(socket, "503 Mailadress Format not as expected\r\n");
+		tcp_send_str(socket, SMTP_UNEXPECTED_MAIL_FORMAT);
 		return NULL;
 	}
 	rcpt = malloc(strlen(tmp)+1);
 	strncpy(rcpt,tmp,strlen(tmp));
 
 	if(from == NULL) {
-		tcp_send_str(socket, "503 I don't _have_ to talk to you. *pout*\r\n");
+		tcp_send_str(socket, SMTP_OUT_OF_SEQUENCE);
 		return rcpt;
 	}
 
 	char* domain = strchr(rcpt,'@')+1;
 	if(strncmp(domain,LOCAL_DOMAIN,strlen(LOCAL_DOMAIN)) && !authenticated) {
-		tcp_send_str(socket, "550 relay not permitted\r\n");
+		tcp_send_str(socket, SMTP_RELAY_FORBIDDEN);
 		return NULL;
 	}
 
-	tcp_send_str(socket, "250 Accepted\r\n");
+	tcp_send_str(socket, SMTP_ACCEPTED);
 	return rcpt;
 }
 
@@ -219,10 +219,10 @@ int
 smtp_data(const int socket, const char* rcpt, char* data) {
 	//check if recipient is already known, otherwise smtp commands out of sequence
 	if(rcpt ==  NULL) {
-		tcp_send_str(socket, "503 I don't _have_ to talk to you. *pout*\r\n");
+		tcp_send_str(socket, SMTP_OUT_OF_SEQUENCE);
 		return -1;
 	}
-	tcp_send_str(socket, "354 Enter message, ending with \".\" on a line by itself\r\n");
+	tcp_send_str(socket, SMTP_ENTER_MESSAGE);
 
 	//receive data until <CRLF>.<CRLF>
 	int bytes_recv, data_size = BUF_SIZ+1, data_cnt = 0;
