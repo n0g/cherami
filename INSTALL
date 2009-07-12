@@ -1,4 +1,3 @@
-Install libglib2.0-dev
 Install and configure saslauthd (you probably want to use "shadow" as authentication type)
 make sure that /var/run/saslauthd belongs to group sasl
 add user cherami and add it to group sasl
