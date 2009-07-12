@@ -1,11 +1,8 @@
 char* extract_address(char* line);
-char* getpeeraddress(int socket);
-char* stripCRLF(char* line);
-char* base64_decode(char* string);
-int smtp_auth_login(int socket);
-int smtp_auth(int socket,char* line);
-void smtp_ehlo(int socket,char* hostname,char* ip);
+int smtp_auth_login(const int socket);
+int smtp_auth(const int socket,const char* line);
+void smtp_ehlo(const int socket,const char* hostname,const char* ip);
 char* smtp_mail(int socket,char* line);
-char* smtp_rcpt(int socket,char* from, int authenticated,char* line);
-int smtp_data(int socket,char* rcpt, char* data);
+char* smtp_rcpt(const int socket,const char* from, int authenticated,char* line);
+int smtp_data(const int socket,const char* rcpt, char* data);
 void handle_client(const int socket);

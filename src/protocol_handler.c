@@ -20,16 +20,15 @@
 #include <utils.h>
 
 void
-handle_client(const int sock) {
+handle_client(const int socket) {
         char hostname[HOST_NAME_MAX];
         char clienthost[HOST_NAME_MAX];
-        char *from = NULL;
-        char *rcpt = NULL;
-        char* ip;
-        char command[5];
-        char* data;
-	char* line;
+        char *from = NULL, *rcpt = NULL, *ip, *data;
 	int authenticated = 0;
+
+        char command[5];
+	char *up_command;
+	char* line;
 
         memset(clienthost,0,HOST_NAME_MAX);
         memset(command,0,5);
@@ -37,43 +36,39 @@ handle_client(const int sock) {
         if(gethostname(hostname,HOST_NAME_MAX) < 0)
                 perror("couldn't retrieve hostname");
 	
-	ip = getpeeraddress(sock);
+	ip = getpeeraddress(socket);
 
         //send greeting
-	tcp_send_str(sock,"220 %s ESMTP %s Ready.\r\n",hostname,VERSION);
+	tcp_send_str(socket,"220 %s ESMTP %s Ready.\r\n",hostname,VERSION);
 
-        while((line = (char*) tcp_receive_line(sock)) != NULL) {
+        while((line = (char*) tcp_receive_line(socket)) != NULL) {
                 //extract command
                 memcpy(command,line,4);
 		//convert to uppercase
-		//TODO: make this nicer... own function?
-                command[0] = toupper(command[0]);
-                command[1] = toupper(command[1]);
-                command[2] = toupper(command[2]);
-                command[3] = toupper(command[3]);
+		up_command = str_toupper(command);
 
 		//TODO: put the actions in seperate functions
-                if(strcmp(command,"EHLO") == 0 || strcmp(command,"HELO") == 0) {
-			smtp_ehlo(sock,hostname,ip);
+                if(strcmp(up_command,"EHLO") == 0 || strcmp(up_command,"HELO") == 0) {
+			smtp_ehlo(socket,hostname,ip);
                 }
-                else if(strcmp(command,"AUTH") == 0) {
-			authenticated = smtp_auth(sock,line);
+                else if(strcmp(up_command,"AUTH") == 0) {
+			authenticated = smtp_auth(socket,line);
 
                 }
-                else if(strcmp(command,"MAIL") == 0) {
-			from = smtp_mail(sock,line);
+                else if(strcmp(up_command,"MAIL") == 0) {
+			from = smtp_mail(socket,line);
                 }
-                else if(strcmp(command,"RCPT") == 0) {
+                else if(strcmp(up_command,"RCPT") == 0) {
 			//TODO: what about more than 1 recipient? array of recipients?
-			rcpt = smtp_rcpt(sock,from,authenticated,line);
+			rcpt = smtp_rcpt(socket,from,authenticated,line);
                 }
-                else if(strcmp(command,"DATA") == 0) {
-			int data_cnt = smtp_data(sock, rcpt, data);
+                else if(strcmp(up_command,"DATA") == 0) {
+			int data_cnt = smtp_data(socket, rcpt, data);
 			if(data < 0)
 				continue;
 			//TODO: add lines to the email header
                        	deliver_mail(ip,from,rcpt,data,data_cnt);
-			tcp_send_str(sock, "250 OK\r\n");
+			tcp_send_str(socket, "250 OK\r\n");
 
 			//clear from and rcpt fields, client could send another mail
 			free(from);
@@ -81,27 +76,32 @@ handle_client(const int sock) {
 			from = NULL;
 			rcpt = NULL;
                 }
-                else if(strcmp(command,"VRFY") == 0 || strcmp(command,"EXPN") == 0) {
-			tcp_send_str(sock,"252 Carrier Pigeons are sworn to secrecy! *flutter*\r\n");
+                else if(strcmp(up_command,"VRFY") == 0 || strcmp(command,"EXPN") == 0) {
+			tcp_send_str(socket,"252 Carrier Pigeons are sworn to secrecy! *flutter*\r\n");
                 }
-                else if(strcmp(command,"QUIT") == 0) {
-			tcp_send_str(sock, "221 %s closing connection\r\n", hostname);
+                else if(strcmp(up_command,"QUIT") == 0) {
+			tcp_send_str(socket, "221 %s closing connection\r\n", hostname);
                         break;
                 }
                 else {
-			tcp_send_str(sock, "500 unrecognized command\r\n");
+			tcp_send_str(socket, "500 unrecognized command\r\n");
                 }
 
 		free(line);
+		free(up_command);
         }
 
-        shutdown(sock,2);
+        shutdown(socket,2);
         exit(0);
 }
 
+/*
+ * Extract the data betwenn first '<' and first '>'.
+ * Needed in smtp_rcpt and smtp_mail to extract the
+ * mail address from input lines.
+ */
 char*
 extract_address(char* line) {
-	//TODO: check for errors - process hangs if line doesn't contain < or >
         char* address;
 	if((address = strchr(line,'<')) == NULL)
 		return NULL;
@@ -109,13 +109,14 @@ extract_address(char* line) {
 
 	if(strchr(address, '>') == NULL)
 		return NULL;	
+	//TODO: don't write into that string
         *(strchr(address,'>')) = '\0';
 
         return address;
 }
 
 int
-smtp_auth_login(int socket) {
+smtp_auth_login(const int socket) {
 	char *recv_line;
 	char *username,*password;
 
@@ -139,17 +140,19 @@ smtp_auth_login(int socket) {
 }
 
 int
-smtp_auth(int socket,char* line) {
+smtp_auth(const int socket,const char* line) {
 	int authenticated = 0;
 	//test for LOGIN or PLAIN type
 	char* type = strchr(line,' ')+1;
+	char *up_type = str_toupper(type);
 
 	//TODO: convert type to upper case
-	if(!strncmp(type,"LOGIN",5)) {
+	if(!strncmp(up_type,"LOGIN",5)) {
 		authenticated = smtp_auth_login(socket);
 	}
 	else {
 		tcp_send_str(socket, "504 Unrecognized authentication type\r\n");
+		free(up_type);
 		return authenticated;
 	}
 
@@ -158,17 +161,18 @@ smtp_auth(int socket,char* line) {
 	else
 		tcp_send_str(socket, "501 Authentication failed\r\n");
 
+	free(up_type);
 	return authenticated;
 }
 
 void
-smtp_ehlo(int socket,char* hostname,char* ip) {
+smtp_ehlo(const int socket,const char* hostname,const char* ip) {
 	//TODO: dynamically send available extensions
 	tcp_send_str(socket, "250-%s Hello %s\r\n250 AUTH LOGIN\r\n", hostname, ip);
 }
 
 char*
-smtp_mail(int socket,char* line) {
+smtp_mail(const int socket,char* line) {
 	char *from, *tmp;
 	//check if mail address is well formed
 	//TODO: check for at sign etc - external function check_mail_address() ?
@@ -185,7 +189,7 @@ smtp_mail(int socket,char* line) {
 }
 
 char*
-smtp_rcpt(int socket,char* from,int authenticated, char* line) {
+smtp_rcpt(const int socket,const char* from,int authenticated, char* line) {
 	char *rcpt, *tmp;
 	//check if recipient is well formed
 	//TODO: check for at sign etc - external function check_mail_address() ?
@@ -212,7 +216,7 @@ smtp_rcpt(int socket,char* from,int authenticated, char* line) {
 }
 
 int 
-smtp_data(int socket, char* rcpt, char* data) {
+smtp_data(const int socket, const char* rcpt, char* data) {
 	//check if recipient is already known, otherwise smtp commands out of sequence
 	if(rcpt ==  NULL) {
 		tcp_send_str(socket, "503 I don't _have_ to talk to you. *pout*\r\n");

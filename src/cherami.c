@@ -33,6 +33,7 @@ main(int argc, char* argv) {
    }    
 
     daemonize();
+    //TODO: write PID file
     tcp_accept_connections(socket,&addr,&addr_len);
     //TODO: install signal handler to close socket
     //signal( SIGTERM, sig_handler);
