@@ -187,7 +187,6 @@ smtp_mail(const int socket,char* line) {
 char*
 smtp_rcpt(const int socket,const char* from,int authenticated, char* line) {
 	char *rcpt, *tmp;
-	//check if recipient is well formed
 	if((tmp = extract_address(line)) == NULL) {
 		tcp_send_str(socket, SMTP_UNEXPECTED_MAIL_FORMAT);
 		return NULL;
@@ -200,10 +199,10 @@ smtp_rcpt(const int socket,const char* from,int authenticated, char* line) {
 		return rcpt;
 	}
 
-        //TODO: well formed? check for at sign etc - external function check_mail_address() ?
-        if(strchr(rcpt,'@') == NULL) {
-                return NULL;
-        }
+	//TODO: well formed? check for at sign etc - external function check_mail_address() ?
+	if(strchr(rcpt,'@') == NULL) {
+		return NULL;
+	}
 
 	char* domain = strchr(rcpt,'@')+1;
 	if(strncmp(domain,LOCAL_DOMAIN,strlen(LOCAL_DOMAIN)) && !authenticated) {
