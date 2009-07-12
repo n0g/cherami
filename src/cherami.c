@@ -19,7 +19,7 @@
 #include <utils.h>
 
 int
-main(int argc, char* argv) {
+main(int argc, char* argv[]) {
 	//TODO: read commandline options somewhere
 
 	openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
@@ -37,5 +37,6 @@ main(int argc, char* argv) {
 	//TODO: install signal handler to close socket
 	//signal( SIGTERM, sig_handler);
 	//close(s);
+	//TODO: closelog for syslog
 	return 0;
 }
