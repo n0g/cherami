@@ -8,6 +8,7 @@
 #include <syslog.h>
 
 #include <utils.h>
+#include <config.h>
 
 /*
  * Let program fall to background. Fork 
@@ -140,6 +141,8 @@ void signal_handler(int signal) {
 	syslog(LOG_INFO, "stopping");
 	closelog();
 	//TODO: delete pid file
+	if( remove(PID_FILE) == -1 )
+		syslog(LOG_ERR,"Couldn't delete PID File in %s",PID_FILE);
 	//TODO: close socket
 	//close(socket);
 	exit(0);
