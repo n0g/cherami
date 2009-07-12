@@ -22,20 +22,15 @@
 
 void
 handle_client(const int socket) {
-        char hostname[HOST_NAME_MAX];
-        char clienthost[HOST_NAME_MAX];
         char *from = NULL, *rcpt = NULL, *ip, *data;
 	int authenticated = 0;
 
         char command[5];
 	char *up_command;
 	char* line;
+	char *hostname = FQDN;
 
-        memset(clienthost,0,HOST_NAME_MAX);
         memset(command,0,5);
-
-        if(gethostname(hostname,HOST_NAME_MAX) < 0)
-                perror("couldn't retrieve hostname");
 	
 	ip = getpeeraddress(socket);
 
