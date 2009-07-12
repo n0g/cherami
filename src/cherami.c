@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <syslog.h>
 #include <signal.h>
 
 #include <config.h>
@@ -26,7 +27,7 @@ main(int argc, char* argv) {
 
 	int socket = 0;
 	if((socket = tcp_open_server_socket(LISTEN_ADDRESS,PORT,AF_UNSPEC,SOCK_STREAM)) < 0) {
-		syslog(LOG_ALARM,"Couldn't open Socket on %s %s",LISTEN_ADDRESS,PORT);
+		syslog(LOG_ERR,"Couldn't open Socket on %s %s",LISTEN_ADDRESS,PORT);
 		exit(1);
 	}
 
