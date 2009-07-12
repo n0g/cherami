@@ -169,7 +169,7 @@ smtp_auth(const int socket,const char* line) {
 void
 smtp_ehlo(const int socket,const char* hostname,const char* ip) {
 	//TODO: dynamically send available extensions
-	tcp_send_str(socket, SMTP_EHLO, hostname, ip);
+	tcp_send_str(socket, SMTP_EHLO, hostname, ip, MAX_MAIL_SIZE);
 }
 
 char*

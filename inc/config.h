@@ -2,7 +2,7 @@
 #define LOCAL_DOMAIN "x1598.at"
 
 #define VERSION "cherami 0.1"
-#define MAX_MAIL_SIZE 52228800
+#define MAX_MAIL_SIZE 52428800
 #define SPOOL_FILE_DIR "/var/spool/cherami"
 #define MDA "/usr/local/bin/procmail"
 #define SOCK_PATH "/var/run/saslauthd/mux"
@@ -11,7 +11,7 @@
 
 //Word of advice: DON'T fuck with those.
 #define SMTP_GREETING "220 %s ESMTP %s Ready.\r\n"
-#define SMTP_EHLO "250-%s Hello %s\r\n250 AUTH LOGIN\r\n"
+#define SMTP_EHLO "250-%s Hello %s\r\n250-SIZE %d\r\n250 AUTH LOGIN\r\n"
 #define SMTP_VRFY_EXPN "252 Carrier Pigeons are sworn to secrecy! *flutter*\r\n"
 #define SMTP_QUIT "221 %s closing connection\r\n"
 #define SMTP_UNRECOGNIZED "500 unrecognized command\r\n"
