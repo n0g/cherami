@@ -21,6 +21,26 @@
 #include <sasl_auth.h>
 #include <utils.h>
 
+/*
+4.5.1 Minimum Implementation
+
+   Any system that includes an SMTP server supporting mail relaying or
+   delivery MUST support the reserved mailbox "postmaster" as a case-
+   insensitive local name.  This postmaster address is not strictly
+   necessary if the server always returns 554 on connection opening (as
+   described in section 3.1).  The requirement to accept mail for
+   postmaster implies that RCPT commands which specify a mailbox for
+   postmaster at any of the domains for which the SMTP server provides
+   mail service, as well as the special case of "RCPT TO:<Postmaster>"
+   (with no domain specification), MUST be supported.
+
+   SMTP systems are expected to make every reasonable effort to accept
+   mail directed to Postmaster from any other system on the Internet.
+   In extreme cases --such as to contain a denial of service attack or
+   other breach of security-- an SMTP server may block mail directed to
+   Postmaster.  However, such arrangements SHOULD be narrowly tailored
+   so as to avoid blocking messages which are not part of such attacks.
+*/
 void
 handle_client(const int socket) {
         char *from = NULL, *rcpt = NULL, *ip, *data;
@@ -75,10 +95,19 @@ handle_client(const int socket) {
 			from = NULL;
 			rcpt = NULL;
                 }
-                else if(strcmp(up_command,"VRFY") == 0 || strcmp(command,"EXPN") == 0) {
+                else if(strcmp(up_command,"VRFY") == 0) {
 			syslog(LOG_INFO, "%s sent a VRFY command, he could be a spambot",ip);
 			tcp_send_str(socket, SMTP_VRFY_EXPN);
                 }
+		else if(strcmp(up_command,"NOOP") == 0) {
+			tcp_send_str(socket,SMTP_OK);
+		}
+		else if(strcmp(up_command,"RSET") == 0) {
+			//TODO: reset all parameters of this mail transaction
+			from = NULL;
+			rcpt = NULL;
+			tcp_send_str(socket,SMTP_OK);
+		}
                 else if(strcmp(up_command,"QUIT") == 0) {
 			tcp_send_str(socket, SMTP_QUIT, hostname);
                         break;
@@ -221,6 +250,43 @@ smtp_rcpt(const int socket,const char* from,int authenticated, char* line) {
 
 int 
 smtp_data(const int socket, const char* rcpt, char* data) {
+/*
+4.5.2 Transparency
+
+   Without some provision for data transparency, the character sequence
+   "<CRLF>.<CRLF>" ends the mail text and cannot be sent by the user.
+   In general, users are not aware of such "forbidden" sequences.  To
+   allow all user composed text to be transmitted transparently, the
+   following procedures are used:
+
+   -  Before sending a line of mail text, the SMTP client checks the
+      first character of the line.  If it is a period, one additional
+      period is inserted at the beginning of the line.
+
+   -  When a line of mail text is received by the SMTP server, it checks
+      the line.  If the line is composed of a single period, it is
+      treated as the end of mail indicator.  If the first character is a
+      period and there are other characters on the line, the first
+      character is deleted.
+
+   The mail data may contain any of the 128 ASCII characters.  All
+   characters are to be delivered to the recipient's mailbox, including
+   spaces, vertical and horizontal tabs, and other control characters.
+   If the transmission channel provides an 8-bit byte (octet) data
+   stream, the 7-bit ASCII codes are transmitted right justified in the
+   octets, with the high order bits cleared to zero.  See 3.7 for
+   special treatment of these conditions in SMTP systems serving a relay
+   function.
+
+   In some systems it may be necessary to transform the data as it is
+   received and stored.  This may be necessary for hosts that use a
+   different character set than ASCII as their local character set, that
+   store data in records rather than strings, or which use special
+   character sequences as delimiters inside mailboxes.  If such
+   transformations are necessary, they MUST be reversible, especially if
+   they are applied to mail being relayed.
+
+*/
 	//check if recipient is already known, otherwise smtp commands out of sequence
 	if(rcpt ==  NULL) {
 		tcp_send_str(socket, SMTP_OUT_OF_SEQUENCE);
