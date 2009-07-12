@@ -148,7 +148,6 @@ smtp_auth(const int socket,const char* line) {
 	char* type = strchr(line,' ')+1;
 	char *up_type = str_toupper(type);
 
-	//TODO: convert type to upper case
 	if(!strncmp(up_type,"LOGIN",5)) {
 		authenticated = smtp_auth_login(socket);
 	}

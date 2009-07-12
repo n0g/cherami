@@ -114,7 +114,6 @@ tcp_accept_connections(int socket, void (*fp)(const int socket)) {
 		}
 
 		if((pid = fork()) == 0) {
-			//TODO: function pointer for handle client
 			(*fp)(c);
 		}
 		else if(pid < 0) {
