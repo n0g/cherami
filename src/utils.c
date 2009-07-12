@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
 #include <utils.h>
 
@@ -40,21 +41,22 @@ stripCRLF(char* line) {
 
 char*
 getpeeraddress(int socket) {
-        char *ip = malloc(15);
-        struct sockaddr_in addr;
-        socklen_t len = sizeof(addr);
+	struct sockaddr_storage ss;
+	socklen_t sslen = sizeof(ss);
+	char *numeric_name = malloc(NI_MAXHOST);
+	char *name = malloc(NI_MAXHOST);
 
-        getpeername(socket,(struct sockaddr*) &addr,&len);
-        int address = addr.sin_addr.s_addr;
-        int a,b,c,d;
-        //TODO: this only works correctly on LE systems (and ipv4 of course)
-        a = (address << 24) >> 24;
-        b = (address << 16) >> 24;
-        c = (address << 8) >> 24;
-        d = address >> 24;
-        snprintf(ip,15,"%d.%d.%d.%d",a,b,c,d);
+	getpeername(socket, (struct sockaddr *)&ss, &sslen);
+	getnameinfo((struct sockaddr *)&ss, sslen, numeric_name, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+	getnameinfo((struct sockaddr *)&ss, sslen, name, NI_MAXHOST, NULL, 0, NI_NAMEREQD);
+	
+	int rtr_len = strlen(name)+strlen(numeric_name)+4;
+	char *rtr = malloc(rtr_len);
+	snprintf(rtr,rtr_len,"%s [%s]",name,numeric_name);
 
-        return ip;
+	free(name);
+	free(numeric_name);
+	return rtr;
 }
 
 /*
