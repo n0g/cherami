@@ -63,6 +63,7 @@ handle_client(const int socket) {
 			int data_cnt = smtp_data(socket, rcpt, data);
 			if(data < 0)
 				continue;
+
 			//TODO: add lines to the email header
 			syslog(LOG_INFO, "Accepted Email from %s to %s delivered by %s",from,rcpt,ip);
                        	deliver_mail(ip,from,rcpt,data,data_cnt);
@@ -75,7 +76,7 @@ handle_client(const int socket) {
 			rcpt = NULL;
                 }
                 else if(strcmp(up_command,"VRFY") == 0 || strcmp(command,"EXPN") == 0) {
-			syslog(LOG_INFO, "%s sent a VRFY command, he could be a spambot");
+			syslog(LOG_INFO, "%s sent a VRFY command, he could be a spambot",ip);
 			tcp_send_str(socket, SMTP_VRFY_EXPN);
                 }
                 else if(strcmp(up_command,"QUIT") == 0) {
@@ -125,7 +126,7 @@ smtp_auth_login(const int socket) {
 	//extract username (base64 decode it)
 	recv_line = (char*) tcp_receive_line(socket);
 	username = base64_decode(recv_line);
-	syslog(LOG_INFO, "%s tries to authenticate");
+	syslog(LOG_INFO, "%s tries to authenticate", username);
 	free(recv_line);
 	//send password request (base64 encoded)
 	tcp_send_str(socket, SMTP_AUTH_LOGIN_PASS);
