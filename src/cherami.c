@@ -17,6 +17,7 @@
 #include <config.h>
 #include <net.h>
 #include <utils.h>
+#include <protocol_handler.h>
 
 int
 main(int argc, char* argv[]) {
@@ -34,6 +35,6 @@ main(int argc, char* argv[]) {
 	daemonize();
 	write_pid_file(PID_FILE);
 	signal( SIGTERM, signal_handler);
-	tcp_accept_connections(socket);
+	tcp_accept_connections(socket, handle_client);
 	return 0;
 }

@@ -13,7 +13,6 @@
 #include <config.h>
 #include <net.h>
 #include <utils.h>
-#include <protocol_handler.h>
 
 #define LISTEN_QUEUE 128
 
@@ -103,7 +102,7 @@ tcp_open_server_socket(const char *hostname,
 }
 
 int
-tcp_accept_connections(int socket) {
+tcp_accept_connections(int socket, void (*fp)(const int socket)) {
 	struct sockaddr_storage addr;
 	socklen_t addr_len = sizeof(addr);
 
@@ -116,7 +115,7 @@ tcp_accept_connections(int socket) {
 
 		if((pid = fork()) == 0) {
 			//TODO: function pointer for handle client
-			handle_client(c);
+			(*fp)(c);
 		}
 		else if(pid < 0) {
 			syslog(LOG_ERR, "tcp_accept_connections: fork() failed. You're probably fucked.");
