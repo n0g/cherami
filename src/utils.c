@@ -101,6 +101,7 @@ base64_decode(const char* string) {
 	//replace all = by A so that base64 fill bytes end up being 
 	//null terminating bytes in the decoded string
 	char *new_string = str_replace(string, 'A', '=');
+	char *free_new_str = new_string;
 
 	char *decoded_str = malloc(1+(3*strlen(string))/4);
 	char *tmp = decoded_str;
@@ -120,6 +121,6 @@ base64_decode(const char* string) {
 	
 	}
 
-	free(new_string);
+	free(free_new_str);
 	return decoded_str;
 }
