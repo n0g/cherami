@@ -18,7 +18,7 @@ daemonize() {
         pid = fork();
         if (pid > 0)
         {
-                //syslog(LOG_INFO,"Exiting Parent");
+                syslog(LOG_INFO,"daemonize: Exiting Parent");
                 exit(0);
         }
 }
