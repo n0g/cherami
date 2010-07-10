@@ -1,4 +1,4 @@
-![cherami - the simple and secure mail transfer agent](http://x1598.at/cherami-logo.png)
+![cherami - the simple and secure mail transfer agent](http://x1598.at/cherami-logo2.png)
 
 Goals
 ======
