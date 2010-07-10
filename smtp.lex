@@ -21,6 +21,6 @@ quit		return QUITTOK;
 \<		return LT;
 \>		return GT;
 \n		return NL;
-[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}	return MAIL;
-[a-zA-Z]+	return STRING;
+[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}	yylval.string=strdup(yytext);return MAIL;
+[a-zA-Z]+	yylval.string=strdup(yytext);return STRING;
 %%

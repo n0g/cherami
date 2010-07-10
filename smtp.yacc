@@ -31,6 +31,13 @@ void handle_client(int sock)
 %}
 
 %token HELOTOK MAILTOK RCPTTOK DATATOK RSETTOK NOOPTOK QUITTOK MAIL STRING LT GT NL COLON
+%union
+{
+	int number;
+	char *string;
+}
+%token <string> MAIL
+%token <string> STRING
 %%
 commands:
         |
@@ -64,8 +71,7 @@ mail_command:
 	MAILTOK COLON LT MAIL GT NL
 	{
 		if(synchronisation == HELOTOK || synchronisation == DATATOK) {
-			printf("mail command from stdout\n");
-			fprintf(fout,"mail command accepted\n");
+			fprintf(fout,"mail command accepted: %s\n",$4);
 			fflush(fout);
 			synchronisation = MAILTOK;
 		}
