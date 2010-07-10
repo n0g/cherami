@@ -1,4 +1,4 @@
-#define PORT "2525" 
+#define PORT "7070" 
 #define LOCAL_DOMAIN "x1598.at"
 #define FQDN "zemanek.x1598.at"
 #define LISTEN_ADDRESS "::"

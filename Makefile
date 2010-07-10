@@ -18,7 +18,7 @@ delivery:
 	$(CC) -c src/delivery.c $(CFLAGS)
 
 protocolhandler:
-	lex -Cr smtp.lex
+	lex -i -Cr smtp.lex
 	yacc -d smtp.yacc
 	$(CC) -c lex.yy.c $(CFLAGS)
 	$(CC) -c y.tab.c $(CFLAGS)
