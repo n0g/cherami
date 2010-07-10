@@ -43,86 +43,80 @@
 */
 void
 handle_client(const int socket) {
-        char *from = NULL, *rcpt = NULL, *ip, *data;
+	/* TODO: meta data structure
+ 		from, recipients, ip, authentication, mailpath
+	*/
+        char *from = NULL, *rcpt = NULL, *ip;
 	int authenticated = 0;
 
-        char command[5];
-	char *up_command;
-	char* line;
-	char *hostname = FQDN;
+	char line[MAX_LINE_LENGTH];
 
-        memset(command,0,5);
-	
 	ip = getpeeraddress(socket);
 	syslog(LOG_INFO, "Accepted SMTP Connection from %s",ip); 
 
-        //send greeting
-	tcp_send_str(socket,SMTP_GREETING,hostname,VERSION);
+        /* send greeting */
+	tcp_send_str(socket,SMTP_GREETING,FQDN,VERSION);
 
-        while((line = (char*) tcp_receive_line(socket)) != NULL) {
-                //extract command
-                memcpy(command,line,4);
-		//convert to uppercase
-		up_command = str_toupper(command);
-
-		//TODO: put the actions in seperate functions
-                if(strcmp(up_command,"EHLO") == 0 || strcmp(up_command,"HELO") == 0) {
-			smtp_ehlo(socket,hostname,ip);
-                }
-                else if(strcmp(up_command,"AUTH") == 0) {
-			authenticated = smtp_auth(socket,line);
-                }
-                else if(strcmp(up_command,"MAIL") == 0) {
-			from = smtp_mail(socket,line);
-                }
-                else if(strcmp(up_command,"RCPT") == 0) {
-			//TODO: what about more than 1 recipient? array of recipients?
-			rcpt = smtp_rcpt(socket,from,authenticated,line);
-                }
-                else if(strcmp(up_command,"DATA") == 0) {
-			int data_cnt = smtp_data(socket, rcpt, data);
-			if(data < 0)
-				continue;
-
-			//TODO: add lines to the email header
-			syslog(LOG_INFO, "Accepted Email from %s to %s delivered by %s",from,rcpt,ip);
-                       	deliver_mail(ip,from,rcpt,data,data_cnt);
-			tcp_send_str(socket, SMTP_OK);
-
-			//clear from and rcpt fields, client could send another mail
-			free(from);
-			free(rcpt);
-			from = NULL;
-			rcpt = NULL;
-                }
-                else if(strcmp(up_command,"VRFY") == 0) {
-			syslog(LOG_INFO, "%s sent a VRFY command, he could be a spambot",ip);
-			tcp_send_str(socket, SMTP_VRFY_EXPN);
-                }
-		else if(strcmp(up_command,"NOOP") == 0) {
-			tcp_send_str(socket,SMTP_OK);
+        while(tcp_receive_line(socket,line,MAX_LINE_LEN)) {
+		if(line[0] >= 'a') {
+			line[0] -= ' ';
+		}	
+		switch(line[0]) {
+			/* EHLO */
+			case 'E':
+			case 'H':
+				smtp_ehlo(socket,hostname,ip);
+				break;
+			/* Authentication*/
+			case 'A':
+				authenticated = smtp_auth(socket,line);
+				break;
+			/* Mail from */
+			case 'M':
+				from = smtp_mail(socket,line);
+				break;
+			/* Recipient OR RESET */
+			case 'R':
+				if(line[1] == 'C' || line[1] == 'c') {
+					//TODO: what about more than 1 recipient? array of recipients?
+					rcpt = smtp_rcpt(socket,from,authenticated,line);
+				}
+				else {
+					//TODO: reset all parameters of this mail transaction
+					from = NULL;
+					rcpt = NULL;
+					tcp_send_str(socket,SMTP_OK);
+				}	
+				break;
+			/* verify */
+			case 'V':
+				syslog(LOG_INFO, "%s sent a VRFY command, he could be a spambot",ip);
+				tcp_send_str(socket, SMTP_VRFY_EXPN);
+				break;
+			/* data */
+			case 'D':
+				//TODO: add lines to the email header
+				syslog(LOG_INFO, "Accepted Email from %s to %s delivered by %s",from,rcpt,ip);
+                       		deliver_mail(ip,from,rcpt,data,data_cnt);
+				tcp_send_str(socket, SMTP_OK);
+				break;
+			/* no operation */
+			case 'N':
+				tcp_send_str(socket,SMTP_OK);
+				break;
+			/* quit */
+			case 'Q':
+				tcp_send_str(socket, SMTP_QUIT, hostname);
+				break
+			default:
+				syslog(LOG_INFO,"%s sent unrecognized SMTP command %s",ip,line);
+				tcp_send_str(socket, SMTP_UNRECOGNIZED);
+				
 		}
-		else if(strcmp(up_command,"RSET") == 0) {
-			//TODO: reset all parameters of this mail transaction
-			from = NULL;
-			rcpt = NULL;
-			tcp_send_str(socket,SMTP_OK);
-		}
-                else if(strcmp(up_command,"QUIT") == 0) {
-			tcp_send_str(socket, SMTP_QUIT, hostname);
-                        break;
-                }
-                else {
-			syslog(LOG_INFO,"%s sent unrecognized SMTP command %s",ip,line);
-			tcp_send_str(socket, SMTP_UNRECOGNIZED);
-                }
-
-		free(line);
-		free(up_command);
         }
 
         shutdown(socket,2);
-        exit(0);
+        exit(EXIT_SUCCESS);
 }
 
 /*

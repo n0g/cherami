@@ -16,12 +16,9 @@
  */
 void
 daemonize() {
-        int pid;
-        pid = fork();
-        if (pid > 0)
-        {
+        if (fork() > 0) {
                 syslog(LOG_INFO,"daemonize: Exiting Parent");
-                exit(0);
+                exit(EXIT_SUCCESS);
         }
 }
 
@@ -132,17 +129,18 @@ base64_decode(const char* string) {
 void
 write_pid_file(const char* filename) {
 	FILE *file = fopen(filename,"w");
-	int pid = getpid();
-	fprintf(file,"%u",pid);
+	fprintf(file,"%u",getpid());
 	fclose(file);
 }
 
-void signal_handler(int signal) {
+void
+signal_handler(int signal) {
 	syslog(LOG_INFO, "stopping");
 	closelog();
-	if( remove(PID_FILE) == -1 )
+	if(remove(PID_FILE) == -1) {
 		syslog(LOG_ERR,"Couldn't delete PID File in %s",PID_FILE);
-	//TODO: close socket
-	//close(socket);
-	exit(0);
+		//TODO: close socket
+		//close(socket);
+	}
+	exit(EXIT_SUCCESS);
 }

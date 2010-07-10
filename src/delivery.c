@@ -34,6 +34,9 @@ deliver_local(char* ip,char* from,char* rcpt,char* data,int datalen) {
         printf("local delivery\n");
         *(strchr(rcpt,'@')) = '\0';
         printf("user: %s\n",rcpt);
+	/* change user to recipient */
+	/* fork and exec procmail */
+	/* pipe the mail into stdin of procmail */
         return 0;
 }
 
