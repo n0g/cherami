@@ -2,15 +2,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <config.h>
 #include <utils.h>
 #include <sasl_auth.h>
 
-int synchronisation, s;
-FILE *fout, *fin;
-char *ip;
+int synchronisation, s, authenticated;
+FILE *fout, *fin, *data;
+char *ip, *from, *rcpt;
  
 void yyerror(const char *str)
 {
@@ -29,6 +30,8 @@ void handle_client(int sock)
 	fout = fdopen(sock,"w");
 	ip = getpeeraddress(sock);
 	s = sock;
+	authenticated = 0;
+	from = rcpt = NULL;
 
 	fprintf(fout,SMTP_GREETING,FQDN,VERSION);
 	fflush(fout);
@@ -101,7 +104,9 @@ auth_command:
 		password = base64_decode(line);
 
 		/*
-		sasl_auth(SOCK_PATH,username,password,"smtp","")
+		if(!sasl_auth(SOCK_PATH,username,password,"smtp",""))
+			authenticated = 1;
+		
 		*/
 		
 		free(username);
@@ -111,8 +116,8 @@ mail_command:
 	MAILTOK COLON LT MAIL GT NL
 	{
 		if(synchronisation == HELOTOK || synchronisation == DATATOK) {
+			from = strdup($4);
 			fprintf(fout,SMTP_OK);
-			fprintf(fout,"Mail-Address: %s\n",$4);
 			fflush(fout);
 			synchronisation = MAILTOK;
 		}
@@ -123,10 +128,17 @@ mail_command:
 rcpt_command:
 	RCPTTOK COLON LT MAIL GT NL
 	{
-		if(synchronisation == MAILTOK || synchronisation == RCPTTOK) {
-			fprintf(fout,SMTP_ACCEPTED);
-			fprintf(fout,"Mail-Address: %s\n",$4);
-			fprintf(fout,SMTP_RELAY_FORBIDDEN);
+		/* allow more than one recipient */
+		if(synchronisation == MAILTOK) {
+			char *domain = strrchr($4,'@');
+			domain++;
+			if(strcasecmp(domain,LOCAL_DOMAIN) == 0 || (strcasecmp(domain,LOCAL_DOMAIN) != 0 && authenticated)) {
+				rcpt = strdup($4);
+				fprintf(fout,SMTP_ACCEPTED);
+			}
+			else {
+				fprintf(fout,SMTP_RELAY_FORBIDDEN);
+			}
 			fflush(fout);
 			synchronisation = RCPTTOK;
 		}
@@ -137,8 +149,29 @@ rcpt_command:
 data_command:
 	DATATOK NL
 	{
+		char buf[1024];
+		int len;
 		if(synchronisation == RCPTTOK) {
 			fprintf(fout,SMTP_ENTER_MESSAGE);
+			fflush(fout);
+			/* open file in spool directory */
+			/* TODO: useful file name */
+			/* TODO: enforce max file limit */
+			data = fopen("test","w");
+			/* read data */
+			do {
+				fgets(buf,1024,fin);
+				/* transparency */
+				if(strncmp(buf,"..",2) == 0) {
+					fputs(buf+1,data);
+				}
+				else {
+					fputs(buf,data);	
+				}
+			} while(strncmp(buf,".\r\n",3) !=0 && strncmp(buf,".\n",2) != 0);
+
+			fprintf(fout,SMTP_ACCEPTED);
+			fprintf(fout,"Delivering Mail from %s (connected by %s) to %s\n",from,ip,rcpt);
 			fflush(fout);
 			synchronisation = DATATOK;
 		}
@@ -155,6 +188,14 @@ noop_command:
 rset_command:
 	RSETTOK NL
 	{
+		if(from != NULL) {
+			free(from);
+			from = NULL;
+		}
+		if(rcpt != NULL) {
+			free(rcpt);
+			rcpt = NULL;
+		}
 		fprintf(fout,SMTP_OK);
 		fflush(fout);
 	};

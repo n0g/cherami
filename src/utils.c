@@ -22,20 +22,23 @@ daemonize() {
         }
 }
 
-/*
- * Remove <CRLF> or <LF> from the end of a line.
- * Anything after the <CRLF> will not be readable anymore.
- */
-char*
-stripCRLF(char* line) {
-        char *tmp = line;
+void
+write_pid_file(const char* filename) {
+	FILE *file = fopen(filename,"w");
+	fprintf(file,"%u",getpid());
+	fclose(file);
+}
 
-        if((tmp = strstr(line,"\r\n")) != NULL)
-                *tmp = '\0';
-        else if((tmp = strchr(line,'\n')) != NULL)
-                *tmp = '\0';
-
-        return line;
+void
+signal_handler(int signal) {
+	syslog(LOG_INFO, "stopping");
+	closelog();
+	if(remove(PID_FILE) == -1) {
+		syslog(LOG_ERR,"Couldn't delete PID File in %s",PID_FILE);
+		//TODO: close socket
+		//close(socket);
+	}
+	exit(EXIT_SUCCESS);
 }
 
 char*
@@ -59,39 +62,6 @@ getpeeraddress(int socket) {
 }
 
 /*
- * Replace all occurences of 'src' with 'dst' in char
- * sequence 'string'.
- */
-char*
-str_replace(const char* string, char dst, char src) {
-	char *new_str = malloc(strlen(string)+1);
-	strncpy(new_str,string,strlen(string));
-
-	char *tmp;
-	while((tmp = strchr(new_str, src)) != NULL)
-		*tmp = dst;
-
-	return new_str;
-}
-
-/*
- * Replace all lower case letters in char sequence
- * 'string' with their upper case version.
- */
-char*
-str_toupper(const char* string) {
-	int str_len = strlen(string)+1;
-	char *new_str = malloc(str_len);
-	char *tmp = new_str;
-	strncpy(new_str,string,str_len);
-	
-	while(*tmp != '\0')
-		*tmp++ = toupper(*tmp);
-
-	return new_str;
-}
-
-/*
  * Decode a base64 encoded STRING. This will NOT
  * work for anything other than a null-terminated
  * string.
@@ -101,7 +71,11 @@ base64_decode(const char* string) {
 	char base64_table[66] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; 
 	//replace all = by A so that base64 fill bytes end up being 
 	//null terminating bytes in the decoded string
-	char *new_string = str_replace(string, 'A', '=');
+	char *new_string = strdup(string);
+	char *p;
+	while((p = strrchr(new_string,'=')) != NULL) {
+		*p = 'A';
+	}
 	char *free_new_str = new_string;
 
 	char *decoded_str = malloc(1+(3*strlen(string))/4);
@@ -124,23 +98,4 @@ base64_decode(const char* string) {
 
 	free(free_new_str);
 	return decoded_str;
-}
-
-void
-write_pid_file(const char* filename) {
-	FILE *file = fopen(filename,"w");
-	fprintf(file,"%u",getpid());
-	fclose(file);
-}
-
-void
-signal_handler(int signal) {
-	syslog(LOG_INFO, "stopping");
-	closelog();
-	if(remove(PID_FILE) == -1) {
-		syslog(LOG_ERR,"Couldn't delete PID File in %s",PID_FILE);
-		//TODO: close socket
-		//close(socket);
-	}
-	exit(EXIT_SUCCESS);
 }

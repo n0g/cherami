@@ -32,9 +32,11 @@ main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	//daemonize();
-	//write_pid_file(PID_FILE);
-	//signal( SIGTERM, signal_handler);
+	/* toggle this section on and off via option
+	daemonize();
+	write_pid_file(PID_FILE);
+	signal( SIGTERM, signal_handler);
+	*/
 	tcp_accept_connections(socket, handle_client);
 	return 0;
 }
